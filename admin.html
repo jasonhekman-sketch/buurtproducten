@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>Admin – Lokale Makers</title>
+
+<style>
+body {
+  font-family: Arial;
+  background:#f4f4f4;
+  padding:40px;
+}
+
+.kaartje {
+  background:white;
+  padding:20px;
+  margin-bottom:15px;
+  border-radius:8px;
+  border:1px solid #ddd;
+}
+
+button {
+  margin-top:10px;
+  padding:8px 12px;
+  cursor:pointer;
+}
+</style>
+</head>
+
+<body>
+
+<div id="loginScherm">
+  <h2>Admin toegang</h2>
+  <input type="password" id="adminCode" placeholder="Voer admincode in">
+  <button onclick="checkLogin()">Open admin</button>
+</div>
+
+<div id="adminInhoud" style="display:none;">
+  <h1>Admin – Aanmeldingen</h1>
+  <div id="lijst"></div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCHTiXZ7JKjoo17_ntxf0UbYKOcc8QS5nw",
+  authDomain: "lokale-makers.firebaseapp.com",
+  projectId: "lokale-makers",
+  storageBucket: "lokale-makers.appspot.com",
+  messagingSenderId: "226335679654",
+  appId: "1:226335679654:web:cae8f57f497c8e01364067"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+const lijst = document.getElementById("lijst");
+
+db.collection("verkopers")
+.orderBy("aangemaaktOp","desc")
+.onSnapshot(snapshot => {
+
+  lijst.innerHTML = "";
+
+  snapshot.forEach(doc => {
+    const v = doc.data();
+
+    const div = document.createElement("div");
+    div.className = "kaartje";
+// nieuwe aanmeldingen opvallend maken
+if (!v.goedgekeurd) {
+  div.style.background = "#fff8dc";
+  div.style.border = "2px solid #f0c040";
+}
+
+
+    div.innerHTML = `
+      <strong>${v.naam}</strong><br>
+      ${v.producten}<br><br>
+
+      Status: ${
+        v.goedgekeurd
+          ? "✅ Goedgekeurd"
+          : "⏳ In afwachting"
+      }<br>
+
+      ${
+        !v.goedgekeurd
+          ? `<button onclick="goedkeuren('${doc.id}')">Goedkeuren</button>`
+          : ""
+      }
+
+      <button onclick="verwijderen('${doc.id}')">Verwijderen</button>
+    `;
+
+    lijst.appendChild(div);
+  });
+});
+
+function goedkeuren(id){
+  db.collection("verkopers").doc(id).update({
+    goedgekeurd:true
+  });
+}
+
+function verwijderen(id){
+  if(confirm("Weet je het zeker?")){
+    db.collection("verkopers").doc(id).delete();
+  }
+}
+
+function checkLogin() {
+  const juisteCode = "makers123";
+  const invoer = document.getElementById("adminCode").value;
+
+  if (invoer === juisteCode) {
+    document.getElementById("loginScherm").style.display = "none";
+    document.getElementById("adminInhoud").style.display = "block";
+  } else {
+    alert("Onjuiste code");
+  }
+}
+
+</script>
+
+</body>
+</html>

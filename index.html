@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>Lokale Makers Community</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f2f2f2;
+      color: #333;
+    }
+    header {
+      background: #2f855a;
+      color: white;
+      padding: 30px 20px;
+      text-align: center;
+    }
+    main {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 20px;
+      background: white;
+      border-radius: 8px;
+    }
+    section {
+      margin-bottom: 40px;
+    }
+    h2 {
+      color: #2f855a;
+    }
+    input, select, textarea {
+      width: 100%;
+      max-width: 400px;
+      padding: 10px;
+      margin: 8px 0 15px;
+    }
+    button {
+      padding: 12px 18px;
+      background: #2f855a;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .verkoper {
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      padding: 15px;
+      margin-bottom: 15px;
+    }
+    #map {
+      height: 400px;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>Lokale Makers Community</h1>
+  <p>Vind zelfgemaakte en natuurlijke producten bij jou in de buurt</p>
+</header>
+
+<main>
+
+<section>
+  <h2>Zoek aanbieders</h2>
+  <input
+    type="text"
+    id="zoekPostcode"
+    placeholder="Postcode (bijv. 12)"
+    onkeyup="filterVerkopers()"
+  >
+
+  <select id="zoekCategorie" onchange="filterVerkopers()">
+    <option value="">Alle categorieën</option>
+    <option value="kefir">Kefir</option>
+    <option value="rauwe melk">Rauwe melk</option>
+    <option value="honing">Honing</option>
+    <option value="overig">Overig</option>
+  </select>
+</section>
+
+<section>
+  <h2>Kaart met aanbieders</h2>
+  <div id="map"></div>
+</section>
+
+<section>
+  <h2>Aanbieders</h2>
+  <div id="verkopersLijst"></div>
+</section>
+
+<section>
+  <h2>Verkoper aanmelden</h2>
+
+  <button id="toggleKnop" onclick="toggleFormulier()">
+    + Nieuwe verkoper aanmelden
+  </button>
+
+  <div id="aanmeldFormulier" style="display:none; margin-top:20px;">
+
+    <input id="naam" placeholder="Naam / bedrijfsnaam">
+    <input id="postcode" placeholder="Postcode (bijv. 1234)">
+    <input id="plaats" placeholder="Plaats">
+
+    <select id="categorie">
+      <option value="">Kies een categorie</option>
+      <option value="kefir">Kefir</option>
+      <option value="rauwe melk">Rauwe melk</option>
+      <option value="honing">Honing</option>
+      <option value="overig">Overig</option>
+    </select>
+
+    <textarea id="producten" placeholder="Welke producten bied je aan?"></textarea>
+
+    <button onclick="voegVerkoperToe()">Verzenden</button>
+
+    <p id="aanmeldMelding" style="display:none; color:#2f855a;">
+      Dank je voor je aanmelding. We controleren deze eerst.
+    </p>
+
+  </div>
+</section>
+
+</main>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+  const firebaseConfig = {
+    apiKey: "AIzaSyCHTiXZ7JKjoo17_ntxf0UbYKOcc8QS5nw",
+    authDomain: "lokale-makers.firebaseapp.com",
+    projectId: "lokale-makers",
+    storageBucket: "lokale-makers.appspot.com",
+    messagingSenderId: "226335679654",
+    appId: "1:226335679654:web:cae8f57f497c8e01364067"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.firestore();
+
+  const verkopers = [];
+  let actieveMarker = null;
+
+
+  const map = L.map('map').setView([52.1, 5.1], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap'
+  }).addTo(map);
+
+  function laadVerkopers() {
+    db.collection("verkopers")
+      .where("goedgekeurd", "==", true)
+      .get()
+      .then(snapshot => {
+        snapshot.forEach(doc => {
+          const v = doc.data();
+          verkopers.push(v);
+const lat = parseFloat(v.lat) + (Math.random() - 0.5) * 0.02;
+const lon = parseFloat(v.lon) + (Math.random() - 0.5) * 0.02;
+
+const marker = L.marker([lat, lon], {
+  riseOnHover: true
+}).addTo(map);
+
+marker.bindPopup(`<strong>${v.naam}</strong><br>${v.producten}`);
+v.marker = marker;
+
+marker.on("click", () => {
+
+  if (actieveMarker) {
+    actieveMarker.setZIndexOffset(0);
+  }
+
+  marker.setZIndexOffset(1000);
+  actieveMarker = marker;
+
+
+
+  // alle highlights resetten
+  document.querySelectorAll(".verkoper").forEach(el => {
+    el.style.background = "white";
+    el.style.border = "1px solid #ddd";
+    el.style.transform = "scale(1)";
+  });
+
+  // juiste verkoper highlighten
+  if (v.element) {
+    v.element.style.background = "#e6f4ea";
+    v.element.style.border = "2px solid #2f855a";
+    v.element.style.transform = "scale(1.01)";
+
+    // automatisch naar element scrollen
+    v.element.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+  }
+});
+
+
+        });
+        toonVerkopers();
+      });
+  }
+
+  function toonVerkopers() {
+    const lijst = document.getElementById("verkopersLijst");
+    lijst.innerHTML = "";
+
+    verkopers.forEach(v => {
+      const div = document.createElement("div");
+      div.className = "verkoper";
+
+div.style.cursor = "pointer";
+
+div.style.cursor = "pointer";
+
+div.onclick = () => {
+
+  // highlight resetten
+document.querySelectorAll(".verkoper").forEach(el => {
+  el.style.background = "white";
+  el.style.border = "1px solid #ddd";
+  el.style.transform = "scale(1)";
+});
+
+
+  // huidige highlight
+ div.style.background = "#e6f4ea";
+div.style.border = "2px solid #2f855a";
+div.style.transform = "scale(1.01)";
+
+
+  if (v.marker) {
+    map.setView(v.marker.getLatLng(), 13);
+    v.marker.openPopup();
+  }
+};
+
+      div.dataset.postcode = v.postcode;
+      div.dataset.categorie = v.categorie;
+    div.innerHTML = `
+  <h3>${v.naam}</h3>
+  <p>${v.producten}</p>
+  ${v.telefoon ? `<p><strong>Telefoon:</strong> ${v.telefoon}</p>` : ""}
+`;
+
+      v.element = div;
+      lijst.appendChild(div);
+    });
+  }
+
+  function filterVerkopers() {
+    const p = document.getElementById("zoekPostcode").value;
+    const c = document.getElementById("zoekCategorie").value;
+
+    verkopers.forEach(v => {
+      const ok =
+        (p === "" || v.postcode.startsWith(p)) &&
+        (c === "" || v.categorie === c);
+
+      v.element.style.display = ok ? "block" : "none";
+      if (v.marker) ok ? v.marker.addTo(map) : map.removeLayer(v.marker);
+    });
+  }
+
+  function toggleFormulier() {
+    const f = document.getElementById("aanmeldFormulier");
+    f.style.display = f.style.display === "none" ? "block" : "none";
+  }
+
+  function voegVerkoperToe() {
+const naam = document.getElementById("naam").value;
+const postcode = document.getElementById("postcode").value;
+const plaats = document.getElementById("plaats").value;
+const categorie = document.getElementById("categorie").value;
+const producten = document.getElementById("producten").value;
+
+
+    if (!naam || !postcode || !plaats || !categorie || !producten) {
+      alert("Vul alle velden in");
+      return;
+    }
+// formulier meteen sluiten (stabiele oplossing)
+document.getElementById("aanmeldFormulier").style.display = "none";
+document.getElementById("toggleKnop").textContent =
+  "+ Nieuwe verkoper aanmelden";
+
+
+    document.getElementById("aanmeldFormulier").style.display = "none";
+
+    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${plaats}`)
+      .then(r => r.json())
+.then(data => {
+  if (!data[0]) return;
+
+  db.collection("verkopers").add({
+    naam,
+    postcode,
+    plaats,
+    categorie,
+    producten,
+    lat: data[0].lat,
+    lon: data[0].lon,
+    goedgekeurd: false,
+    aangemaaktOp: new Date()
+  }).then(() => {
+
+    // velden leegmaken
+    document.getElementById("naam").value = "";
+    document.getElementById("postcode").value = "";
+    document.getElementById("plaats").value = "";
+    document.getElementById("producten").value = "";
+
+    // formulier sluiten
+    document.getElementById("aanmeldFormulier").style.display = "none";
+    document.getElementById("toggleKnop").textContent =
+      "+ Nieuwe verkoper aanmelden";
+
+    // succesmelding tonen
+    document.getElementById("aanmeldMelding").style.display = "block";
+
+  });
+
+document.addEventListener("click", function(e) {
+
+  const kaartje = e.target.closest(".verkoper");
+  if (!kaartje) return;
+
+  const index = Array.from(document.querySelectorAll(".verkoper")).indexOf(kaartje);
+  if (index === -1) return;
+
+  const v = verkopers[index];
+  toonDetail(v);
+
+});
+ 
+
+  laadVerkopers();
+
+function toonDetail(v) {
+
+  const inhoud = document.getElementById("detailInhoud");
+
+  inhoud.innerHTML = `
+    <h2>${v.naam}</h2>
+    <p><strong>Producten:</strong><br>${v.producten}</p>
+    <p><strong>Plaats:</strong> ${v.plaats}</p>
+    <p><strong>Postcode:</strong> ${v.postcode}</p>
+    ${v.telefoon ? `<p><strong>Telefoon:</strong> ${v.telefoon}</p>` : ""}
+  `;
+
+  document.getElementById("detailPopup").style.display = "flex";
+}
+
+function sluitDetail() {
+  document.getElementById("detailPopup").style.display = "none";
+}
+
+document.getElementById("detailPopup").addEventListener("click", function(e) {
+  if (e.target === this) {
+    sluitDetail();
+  }
+});
+
+
+</script>
+
+<!-- Detail popup -->
+<div id="detailPopup" style="
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  justify-content:center;
+  align-items:center;
+  z-index:9999;
+">
+
+  <div style="
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    max-width:500px;
+    width:90%;
+    position:relative;
+  ">
+
+    <button onclick="sluitDetail()" style="
+      position:absolute;
+      top:10px;
+      right:10px;
+      cursor:pointer;
+    ">❌</button>
+
+    <div id="detailInhoud"></div>
+
+  </div>
+</div>
+
+
+</body>
+</html>
