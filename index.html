@@ -159,10 +159,58 @@ window.addEventListener("load", function() {
     attribution: '© OpenStreetMap'
   }).addTo(map);
 
-  function laadVerkopers() {
+ function laadVerkopers() {
 
-});
-    db.collection("verkopers")
+  db.collection("verkopers")
+    .where("goedgekeurd", "==", true)
+    .get()
+    .then(snapshot => {
+      snapshot.forEach(doc => {
+        const v = doc.data();
+        verkopers.push(v);
+
+        const lat = parseFloat(v.lat) + (Math.random() - 0.5) * 0.02;
+        const lon = parseFloat(v.lon) + (Math.random() - 0.5) * 0.02;
+
+        const marker = L.marker([lat, lon], {
+          riseOnHover: true
+        }).addTo(map);
+
+        marker.bindPopup(`<strong>${v.naam}</strong><br>${v.producten}`);
+        v.marker = marker;
+
+        marker.on("click", () => {
+
+          if (actieveMarker) {
+            actieveMarker.setZIndexOffset(0);
+          }
+
+          marker.setZIndexOffset(1000);
+          actieveMarker = marker;
+
+          document.querySelectorAll(".verkoper").forEach(el => {
+            el.style.background = "white";
+            el.style.border = "1px solid #ddd";
+            el.style.transform = "scale(1)";
+          });
+
+          if (v.element) {
+            v.element.style.background = "#e6f4ea";
+            v.element.style.border = "2px solid #2f855a";
+            v.element.style.transform = "scale(1.01)";
+            v.element.scrollIntoView({
+              behavior: "smooth",
+              block: "center"
+            });
+          }
+
+        });
+
+      });
+
+      toonVerkopers();
+    });
+}
       .where("goedgekeurd", "==", true)
       .get()
       .then(snapshot => {
@@ -350,7 +398,6 @@ document.addEventListener("click", function(e) {
 });
  
 
-  laadVerkopers();
 
 function toonDetail(v) {
 
@@ -376,6 +423,8 @@ document.getElementById("detailPopup").addEventListener("click", function(e) {
     sluitDetail();
   }
 });
+
+  laadVerkopers();
 
 
 </script>
