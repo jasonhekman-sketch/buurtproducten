@@ -152,7 +152,7 @@
 
   const verkopers = [];
   let actieveMarker = null;
-
+window.addEventListener("load", function() {
 
   const map = L.map('map').setView([52.1, 5.1], 7);
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -160,6 +160,8 @@
   }).addTo(map);
 
   function laadVerkopers() {
+
+});
     db.collection("verkopers")
       .where("goedgekeurd", "==", true)
       .get()
