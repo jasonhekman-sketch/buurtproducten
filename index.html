@@ -138,74 +138,61 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-  const firebaseConfig = {
-    apiKey: "AIzaSyCHTiXZ7JKjoo17_ntxf0UbYKOcc8QS5nw",
-    authDomain: "lokale-makers.firebaseapp.com",
-    projectId: "lokale-makers",
-    storageBucket: "lokale-makers.appspot.com",
-    messagingSenderId: "226335679654",
-    appId: "1:226335679654:web:cae8f57f497c8e01364067"
-  };
+const firebaseConfig = {
+  apiKey: "AIzaSyCHTiXZ7JKjoo17_ntxf0UbYKOcc8QS5nw",
+  authDomain: "lokale-makers.firebaseapp.com",
+  projectId: "lokale-makers",
+  storageBucket: "lokale-makers.appspot.com",
+  messagingSenderId: "226335679654",
+  appId: "1:226335679654:web:cae8f57f497c8e01364067"
+};
 
-  firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-  const verkopers = [];
-  let actieveMarker = null;
-window.addEventListener("load", function() {
+const verkopers = [];
+let map;
+let actieveMarker = null;
 
-  const map = L.map('map').setView([52.1, 5.1], 7);
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
+window.addEventListener("load", () => {
+
+  // ✅ kaart starten
+  map = L.map("map").setView([52.1, 5.1], 7);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "© OpenStreetMap"
   }).addTo(map);
 
- function laadVerkopers() {
+  laadVerkopers();
+});
+
+
+// =============================
+// VERKOPERS LADEN
+// =============================
+function laadVerkopers() {
 
   db.collection("verkopers")
     .where("goedgekeurd", "==", true)
     .get()
     .then(snapshot => {
+
+      verkopers.length = 0;
+
       snapshot.forEach(doc => {
         const v = doc.data();
         verkopers.push(v);
 
-        const lat = parseFloat(v.lat) + (Math.random() - 0.5) * 0.02;
-        const lon = parseFloat(v.lon) + (Math.random() - 0.5) * 0.02;
+        const lat = parseFloat(v.lat) + (Math.random()-0.5)*0.02;
+        const lon = parseFloat(v.lon) + (Math.random()-0.5)*0.02;
 
-        const marker = L.marker([lat, lon], {
-          riseOnHover: true
-        }).addTo(map);
+        const marker = L.marker([lat, lon], { riseOnHover:true })
+          .addTo(map)
+          .bindPopup(`<strong>${v.naam}</strong><br>${v.producten}`);
 
-        marker.bindPopup(`<strong>${v.naam}</strong><br>${v.producten}`);
         v.marker = marker;
 
-        marker.on("click", () => {
-
-          if (actieveMarker) {
-            actieveMarker.setZIndexOffset(0);
-          }
-
-          marker.setZIndexOffset(1000);
-          actieveMarker = marker;
-
-          document.querySelectorAll(".verkoper").forEach(el => {
-            el.style.background = "white";
-            el.style.border = "1px solid #ddd";
-            el.style.transform = "scale(1)";
-          });
-
-          if (v.element) {
-            v.element.style.background = "#e6f4ea";
-            v.element.style.border = "2px solid #2f855a";
-            v.element.style.transform = "scale(1.01)";
-            v.element.scrollIntoView({
-              behavior: "smooth",
-              block: "center"
-            });
-          }
-
-        });
-
+        marker.on("click", () => highlightVerkoper(v));
       });
 
       toonVerkopers();
@@ -213,171 +200,142 @@ window.addEventListener("load", function() {
 }
 
 
-  function toonVerkopers() {
-    const lijst = document.getElementById("verkopersLijst");
-    lijst.innerHTML = "";
+// =============================
+// LIJST TONEN
+// =============================
+function toonVerkopers() {
 
-    verkopers.forEach(v => {
-      const div = document.createElement("div");
-      div.className = "verkoper";
+  const lijst = document.getElementById("verkopersLijst");
+  lijst.innerHTML = "";
 
-div.style.cursor = "pointer";
+  verkopers.forEach(v => {
 
-div.style.cursor = "pointer";
+    const div = document.createElement("div");
+    div.className = "verkoper";
+    div.style.cursor = "pointer";
 
-div.onclick = () => {
-
-  // highlight resetten
-document.querySelectorAll(".verkoper").forEach(el => {
-  el.style.background = "white";
-  el.style.border = "1px solid #ddd";
-  el.style.transform = "scale(1)";
-});
-
-
-  // huidige highlight
- div.style.background = "#e6f4ea";
-div.style.border = "2px solid #2f855a";
-div.style.transform = "scale(1.01)";
-
-
-  if (v.marker) {
-    map.setView(v.marker.getLatLng(), 13);
-    v.marker.openPopup();
-  }
-};
-
-      div.dataset.postcode = v.postcode;
-      div.dataset.categorie = v.categorie;
     div.innerHTML = `
-  <h3>${v.naam}</h3>
-  <p>${v.producten}</p>
-  ${v.telefoon ? `<p><strong>Telefoon:</strong> ${v.telefoon}</p>` : ""}
-`;
+      <h3>${v.naam}</h3>
+      <p>${v.producten}</p>
+      ${v.telefoon ? `<p><strong>Telefoon:</strong> ${v.telefoon}</p>` : ""}
+    `;
 
-      v.element = div;
-      lijst.appendChild(div);
-    });
-  }
+    div.onclick = () => {
+      highlightVerkoper(v);
+      map.setView(v.marker.getLatLng(), 13);
+      v.marker.openPopup();
+    };
 
-  function filterVerkopers() {
-    const p = document.getElementById("zoekPostcode").value;
-    const c = document.getElementById("zoekCategorie").value;
-
-    verkopers.forEach(v => {
-      const ok =
-        (p === "" || v.postcode.startsWith(p)) &&
-        (c === "" || v.categorie === c);
-
-      v.element.style.display = ok ? "block" : "none";
-      if (v.marker) ok ? v.marker.addTo(map) : map.removeLayer(v.marker);
-    });
-  }
-
-  function toggleFormulier() {
-    const f = document.getElementById("aanmeldFormulier");
-    f.style.display = f.style.display === "none" ? "block" : "none";
-  }
-
-  function voegVerkoperToe() {
-const naam = document.getElementById("naam").value;
-const postcode = document.getElementById("postcode").value;
-const plaats = document.getElementById("plaats").value;
-const categorie = document.getElementById("categorie").value;
-const producten = document.getElementById("producten").value;
+    v.element = div;
+    lijst.appendChild(div);
+  });
+}
 
 
-    if (!naam || !postcode || !plaats || !categorie || !producten) {
-      alert("Vul alle velden in");
-      return;
-    }
-// formulier meteen sluiten (stabiele oplossing)
-document.getElementById("aanmeldFormulier").style.display = "none";
-document.getElementById("toggleKnop").textContent =
-  "+ Nieuwe verkoper aanmelden";
+// =============================
+// HIGHLIGHT
+// =============================
+function highlightVerkoper(v){
 
-
-    document.getElementById("aanmeldFormulier").style.display = "none";
-
-    fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${plaats}`)
-      .then(r => r.json())
-.then(data => {
-  if (!data[0]) return;
-
-  db.collection("verkopers").add({
-    naam,
-    postcode,
-    plaats,
-    categorie,
-    producten,
-    lat: data[0].lat,
-    lon: data[0].lon,
-    goedgekeurd: false,
-    aangemaaktOp: new Date()
-  }).then(() => {
-
-    // velden leegmaken
-    document.getElementById("naam").value = "";
-    document.getElementById("postcode").value = "";
-    document.getElementById("plaats").value = "";
-    document.getElementById("producten").value = "";
-
-    // formulier sluiten
-    document.getElementById("aanmeldFormulier").style.display = "none";
-    document.getElementById("toggleKnop").textContent =
-      "+ Nieuwe verkoper aanmelden";
-
-    // succesmelding tonen
-    document.getElementById("aanmeldMelding").style.display = "block";
-
+  document.querySelectorAll(".verkoper").forEach(el=>{
+    el.style.background="white";
+    el.style.border="1px solid #ddd";
+    el.style.transform="scale(1)";
   });
 
-document.addEventListener("click", function(e) {
-
-  const kaartje = e.target.closest(".verkoper");
-  if (!kaartje) return;
-
-  const index = Array.from(document.querySelectorAll(".verkoper")).indexOf(kaartje);
-  if (index === -1) return;
-
-  const v = verkopers[index];
-  toonDetail(v);
-
-});
- 
-
-
-function toonDetail(v) {
-
-  const inhoud = document.getElementById("detailInhoud");
-
-  inhoud.innerHTML = `
-    <h2>${v.naam}</h2>
-    <p><strong>Producten:</strong><br>${v.producten}</p>
-    <p><strong>Plaats:</strong> ${v.plaats}</p>
-    <p><strong>Postcode:</strong> ${v.postcode}</p>
-    ${v.telefoon ? `<p><strong>Telefoon:</strong> ${v.telefoon}</p>` : ""}
-  `;
-
-  document.getElementById("detailPopup").style.display = "flex";
-}
-
-function sluitDetail() {
-  document.getElementById("detailPopup").style.display = "none";
-}
-
-document.getElementById("detailPopup").addEventListener("click", function(e) {
-  if (e.target === this) {
-    sluitDetail();
+  if(v.element){
+    v.element.style.background="#e6f4ea";
+    v.element.style.border="2px solid #2f855a";
+    v.element.style.transform="scale(1.01)";
   }
-});
 
-  laadVerkopers();
+  if(actieveMarker){
+    actieveMarker.setZIndexOffset(0);
+  }
 
-});
+  v.marker.setZIndexOffset(1000);
+  actieveMarker = v.marker;
+}
 
+
+// =============================
+// FILTER
+// =============================
+function filterVerkopers(){
+
+  const p = document.getElementById("zoekPostcode").value;
+  const c = document.getElementById("zoekCategorie").value;
+
+  verkopers.forEach(v=>{
+
+    const ok =
+      (p==="" || v.postcode.startsWith(p)) &&
+      (c==="" || v.categorie===c);
+
+    v.element.style.display = ok ? "block":"none";
+
+    if(v.marker){
+      ok ? v.marker.addTo(map) : map.removeLayer(v.marker);
+    }
+  });
+}
+
+
+// =============================
+// FORMULIER
+// =============================
+function toggleFormulier(){
+  const f=document.getElementById("aanmeldFormulier");
+  f.style.display = f.style.display==="none"?"block":"none";
+}
+
+
+// =============================
+// VERKOPER TOEVOEGEN
+// =============================
+function voegVerkoperToe(){
+
+  const naam=document.getElementById("naam").value;
+  const postcode=document.getElementById("postcode").value;
+  const plaats=document.getElementById("plaats").value;
+  const categorie=document.getElementById("categorie").value;
+  const producten=document.getElementById("producten").value;
+
+  if(!naam||!postcode||!plaats||!categorie||!producten){
+    alert("Vul alle velden in");
+    return;
+  }
+
+  fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${plaats}`)
+    .then(r=>r.json())
+    .then(data=>{
+
+      if(!data[0]) return;
+
+      return db.collection("verkopers").add({
+        naam,
+        postcode,
+        plaats,
+        categorie,
+        producten,
+        lat:data[0].lat,
+        lon:data[0].lon,
+        goedgekeurd:false,
+        aangemaaktOp:new Date()
+      });
+    })
+    .then(()=>{
+
+      document.getElementById("aanmeldFormulier").style.display="none";
+      document.getElementById("aanmeldMelding").style.display="block";
+
+      document.getElementById("naam").value="";
+      document.getElementById("postcode").value="";
+      document.getElementById("plaats").value="";
+      document.getElementById("producten").value="";
+    });
+}
 </script>
-
 <!-- Detail popup -->
 <div id="detailPopup" style="
   display:none;
