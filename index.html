@@ -174,7 +174,7 @@ function laadVerkopers() {
 
   db.collection("verkopers")
     .where("goedgekeurd", "==", true)
-    .onSnapshot()
+    ..get()
     .then(snapshot => {
 
       verkopers.length = 0;
