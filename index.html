@@ -45,17 +45,35 @@ header {
 /* VERKOPER KAARTEN */
 .verkoper {
   background: white;
-  border-radius: 12px;
-  padding: 18px;
+  border-radius: 16px;
+  padding: 20px;
   margin-bottom: 18px;
   border: 1px solid #e5e7eb;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-  transition: all 0.2s ease;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.06);
+  transition: all 0.25s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.verkoper::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 5px;
+  height: 100%;
+  background: linear-gradient(#38a169, #2f855a);
+  opacity: 0;
+  transition: 0.25s;
+}
+
+.verkoper:hover::before {
+  opacity: 1;
 }
 
 .verkoper:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 22px 45px rgba(0,0,0,0.15);
   border-color: #2f855a;
 }
 
