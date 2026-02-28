@@ -112,6 +112,32 @@ button:hover {
   }
 }
 
+.hero {
+  background: linear-gradient(rgba(0,0,0,0.35), rgba(0,0,0,0.35)),
+              url("https://images.unsplash.com/photo-1501004318641-b39e6451bec6");
+  background-size: cover;
+  background-position: center;
+  padding: 110px 20px;
+  text-align: center;
+  color: white;
+}
+
+.hero-content {
+  max-width: 700px;
+  margin: auto;
+}
+
+.hero h2 {
+  font-size: 42px;
+  margin-bottom: 12px;
+}
+
+.hero p {
+  font-size: 18px;
+  margin-bottom: 25px;
+  opacity: 0.95;
+}
+
 /* LINKER KOLOM */
 .container section:nth-child(1),
 .container section:nth-child(3) {
@@ -142,6 +168,17 @@ button:hover {
 
 
 </header>
+
+<section class="hero">
+  <div class="hero-content">
+    <h2>Ontdek lokale makers bij jou in de buurt</h2>
+    <p>Rechtstreeks van producent naar consument — eerlijk, lokaal en natuurlijk.</p>
+
+    <button onclick="document.getElementById('map').scrollIntoView({behavior:'smooth'})">
+      Bekijk aanbieders
+    </button>
+  </div>
+</section>
 
 <main class="container">
 
