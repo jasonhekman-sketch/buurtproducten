@@ -349,10 +349,12 @@ function filterVerkopers(){
 function toggleFormulier(){
   const f = document.getElementById("aanmeldFormulier");
 
-  if(f.style.display === "none" || f.style.display === ""){
-    f.style.display = "block";
-  } else {
+  const zichtbaar = window.getComputedStyle(f).display !== "none";
+
+  if(zichtbaar){
     f.style.display = "none";
+  } else {
+    f.style.display = "block";
   }
 }
 
