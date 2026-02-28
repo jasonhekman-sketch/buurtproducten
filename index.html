@@ -21,10 +21,15 @@ body {
 header {
   background: linear-gradient(135deg, #2f855a, #276749);
   color: white;
-  padding: 30px 20px;
+  padding: 18px 20px;
   text-align: center;
-}
 
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  backdrop-filter: blur(6px);
+}
 /* CONTAINER */
 .container {
   max-width: 1400px;
@@ -172,8 +177,7 @@ button:hover {
 <section class="hero">
   <div class="hero-content">
     <h2>Ontdek lokale makers bij jou in de buurt</h2>
-    <p>Rechtstreeks van producent naar consument — eerlijk, lokaal en natuurlijk.</p>
-
+    <p>Eerlijke producten rechtstreeks van de producent.</p>
     <button onclick="document.getElementById('map').scrollIntoView({behavior:'smooth'})">
       Bekijk aanbieders
     </button>
@@ -239,31 +243,7 @@ const db = firebase.firestore();
 const verkopers = [];
 let map;
 let actieveMarker = null;
-function highlightVerkoper(v){
 
-  // reset alle kaarten
-  document.querySelectorAll(".verkoper").forEach(el=>{
-    el.style.background="white";
-    el.style.border="1px solid #ddd";
-    el.style.transform="scale(1)";
-  });
-
-  // actieve verkoper highlighten
-  if(v.element){
-    v.element.style.background="#e6f4ea";
-    v.element.style.border="2px solid #2f855a";
-    v.element.style.transform="scale(1.01)";
-  }
-
-  // marker resetten
-  if(actieveMarker){
-    actieveMarker.setZIndexOffset(0);
-  }
-
-  // nieuwe marker bovenaan
-  v.marker.setZIndexOffset(1000);
-  actieveMarker = v.marker;
-}
 
 window.addEventListener("load", () => {
 
