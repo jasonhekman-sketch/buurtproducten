@@ -279,11 +279,9 @@ function toonVerkopers() {
       ${v.telefoon ? `<p><strong>Telefoon:</strong> ${v.telefoon}</p>` : ""}
     `;
 
-    div.onclick = () => {
-      highlightVerkoper(v);
-      map.setView(v.marker.getLatLng(), 13);
-      v.marker.openPopup();
-    };
+div.onclick = () => {
+  openDetail(v);
+};
 
     v.element = div;
     setTimeout(() => {
@@ -396,9 +394,35 @@ function voegVerkoperToe(){
       document.getElementById("producten").value="";
     });
 }
+
+function openDetail(v){
+
+  document.getElementById("detailInhoud").innerHTML = `
+    <h2>${v.naam}</h2>
+    <p><strong>Categorie:</strong> ${v.categorie}</p>
+    <p><strong>Plaats:</strong> ${v.plaats}</p>
+    <p>${v.producten}</p>
+  `;
+
+  document.getElementById("detailPopup").style.display = "flex";
+}
+
+function sluitDetail(){
+  document.getElementById("detailPopup").style.display = "none";
+}
+
+document.getElementById("detailPopup").addEventListener("click", function(e){
+  if(e.target === this){
+    sluitDetail();
+  }
+});
+
+
+
 </script>
 <!-- Detail popup -->
 <div id="detailPopup" style="
+
   display:none;
   position:fixed;
   top:0;
