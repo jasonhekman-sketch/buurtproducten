@@ -348,10 +348,11 @@ function voegVerkoperToe(){
   const categorie=document.getElementById("categorie").value;
   const producten=document.getElementById("producten").value;
 
-  if(!naam||!postcode||!plaats||!categorie||!producten){
-    toonMelding("Vul alle velden in");
-    return;
-  }
+if(!naam||!postcode||!plaats||!categorie||!producten){
+  document.getElementById("aanmeldMelding").innerText = "Vul alle velden in";
+  document.getElementById("aanmeldMelding").style.display = "block";
+  return;
+}
 
   fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${plaats}`)
     .then(r=>r.json())
