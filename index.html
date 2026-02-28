@@ -412,6 +412,30 @@ function sluitDetail(){
   });
 }
 
+function toonMelding(tekst){
+
+  let melding = document.createElement("div");
+
+  melding.innerText = tekst;
+
+  melding.style.position = "fixed";
+  melding.style.top = "20px";
+  melding.style.left = "50%";
+  melding.style.transform = "translateX(-50%)";
+  melding.style.background = "#2f855a";
+  melding.style.color = "white";
+  melding.style.padding = "12px 18px";
+  melding.style.borderRadius = "8px";
+  melding.style.zIndex = "10000";
+  melding.style.boxShadow = "0 6px 18px rgba(0,0,0,0.2)";
+
+  document.body.appendChild(melding);
+
+  setTimeout(() => {
+    melding.remove();
+  }, 2500);
+}
+
 document.addEventListener("keydown", function(e){
   if(e.key === "Escape"){
     sluitDetail();
