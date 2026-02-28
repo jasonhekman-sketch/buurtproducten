@@ -344,7 +344,15 @@ function highlightVerkoper(v){
 
   v.marker.setZIndexOffset(1000);
   actieveMarker = v.marker;
+
+if(v.element){
+  v.element.scrollIntoView({
+    behavior: "smooth",
+    block: "center"
+  });
 }
+
+
 
 
 // =============================
