@@ -347,8 +347,13 @@ function filterVerkopers(){
 // FORMULIER
 // =============================
 function toggleFormulier(){
-  const f=document.getElementById("aanmeldFormulier");
-  f.style.display = f.style.display==="none"?"block":"none";
+  const f = document.getElementById("aanmeldFormulier");
+
+  if(f.style.display === "none" || f.style.display === ""){
+    f.style.display = "block";
+  } else {
+    f.style.display = "none";
+  }
 }
 
 
