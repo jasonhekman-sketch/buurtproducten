@@ -251,7 +251,10 @@ function laadVerkopers() {
 
         v.marker = marker;
 
-marker.on("click", () => openDetail(v));
+marker.on("click", () => {
+  highlightVerkoper(v);
+  openDetail(v);
+});
       });
 
       toonVerkopers();
@@ -405,6 +408,7 @@ function openDetail(v){
   `;
 
   document.getElementById("detailPopup").style.display = "flex";
+highlightVerkoper(v);
 }
 
 function sluitDetail(){
