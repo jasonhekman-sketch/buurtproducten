@@ -349,7 +349,7 @@ function voegVerkoperToe(){
   const producten=document.getElementById("producten").value;
 
   if(!naam||!postcode||!plaats||!categorie||!producten){
-    alert("Vul alle velden in");
+    toonMelding("Vul alle velden in");
     return;
   }
 
