@@ -190,6 +190,31 @@ const db = firebase.firestore();
 const verkopers = [];
 let map;
 let actieveMarker = null;
+function highlightVerkoper(v){
+
+  // reset alle kaarten
+  document.querySelectorAll(".verkoper").forEach(el=>{
+    el.style.background="white";
+    el.style.border="1px solid #ddd";
+    el.style.transform="scale(1)";
+  });
+
+  // actieve verkoper highlighten
+  if(v.element){
+    v.element.style.background="#e6f4ea";
+    v.element.style.border="2px solid #2f855a";
+    v.element.style.transform="scale(1.01)";
+  }
+
+  // marker resetten
+  if(actieveMarker){
+    actieveMarker.setZIndexOffset(0);
+  }
+
+  // nieuwe marker bovenaan
+  v.marker.setZIndexOffset(1000);
+  actieveMarker = v.marker;
+}
 
 window.addEventListener("load", () => {
 
