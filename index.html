@@ -408,18 +408,20 @@ function openDetail(v){
   `;
 
   document.getElementById("detailPopup").style.display = "flex";
-highlightVerkoper(v);
+  highlightVerkoper(v);
+
+document.getElementById("detailPopup").onclick = function(e){
+  if(e.target === this){
+    sluitDetail();
+  }
+};
 }
 
 function sluitDetail(){
   document.getElementById("detailPopup").style.display = "none";
 }
 
-document.getElementById("detailPopup").addEventListener("click", function(e){
-  if(e.target === this){
-    sluitDetail();
-  }
-});
+
 
 
 
