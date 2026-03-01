@@ -266,48 +266,47 @@ let userLon = null;
 
 window.addEventListener("load", () => {
 
-  // kaart starten
+  // kaart starten (SIMPEL EN STABIEL)
   map = L.map("map").setView([52.1, 5.1], 7);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap"
   }).addTo(map);
 
-  // locatie ophalen
-  if (navigator.geolocation) {
+  // verkopers laden
 
-    navigator.geolocation.getCurrentPosition(
+if (navigator.geolocation) {
 
-      pos => {
+  navigator.geolocation.getCurrentPosition(
 
-        userLat = pos.coords.latitude;
-        userLon = pos.coords.longitude;
+    function(pos) {
 
-        map.setView([userLat, userLon], 11);
+      userLat = pos.coords.latitude;
+      userLon = pos.coords.longitude;
 
-        L.circleMarker([userLat, userLon], {
-          radius: 8,
-          color: "#2563eb",
-          fillColor: "#3b82f6",
-          fillOpacity: 1
-        })
-        .addTo(map)
-        .bindPopup("📍 Jij bent hier");
+      map.setView([userLat, userLon], 11);
 
-        laadVerkopers();
-      },
+const jijMarker = L.circleMarker([userLat, userLon], {
+  radius: 12,
+  color: "#b91c1c",      // rode rand
+  fillColor: "#ef4444",  // rode vulling
+  fillOpacity: 1
+}).addTo(map);
 
-      err => {
-        console.log("LOCATIE FOUT:", err.message);
-        laadVerkopers();
-      }
+      jijMarker.bindPopup("📍 Jij bent hier").openPopup();
 
-    );
+      laadVerkopers();
+    },
 
-  } else {
-    laadVerkopers();
-  }
+    function() {
+      laadVerkopers();
+    }
 
+  );
+
+} else {
+  laadVerkopers();
+}
 });
 // =============================
 // VERKOPERS LADEN
@@ -349,6 +348,12 @@ marker.on("click", () => {
       });
 
       toonVerkopers();
+// automatisch dichtstbijzijnde openen
+if(verkopers.length > 0 && verkopers[0].afstand){
+  setTimeout(() => {
+    openDetail(verkopers[0]);
+  }, 600);
+}
     });
 }
 
@@ -360,10 +365,13 @@ function toonVerkopers() {
 
   const lijst = document.getElementById("verkopersLijst");
   lijst.innerHTML = "";
+let teller = 0;
+
 // sorteer op afstand als locatie bekend is
 if(userLat && userLon){
 
   verkopers.forEach(v => {
+let teller = 0;
     const dx = userLat - parseFloat(v.lat);
     const dy = userLon - parseFloat(v.lon);
     v.afstand = Math.sqrt(dx*dx + dy*dy);
@@ -375,7 +383,14 @@ if(userLat && userLon){
 
   verkopers.forEach(v => {
 
-    const div = document.createElement("div");
+ const div = document.createElement("div");
+
+if(teller < 3 && v.afstand){
+  div.style.border = "2px solid #2f855a";
+  div.style.background = "#f0fff4";
+}
+
+teller++;
     div.className = "verkoper";
     div.style.cursor = "pointer";
 
