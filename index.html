@@ -260,6 +260,8 @@ const db = firebase.firestore();
 const verkopers = [];
 let map;
 let actieveMarker = null;
+let userLat = null;
+let userLon = null;
 
 
 window.addEventListener("load", () => {
@@ -272,18 +274,35 @@ window.addEventListener("load", () => {
   }).addTo(map);
 
   // ✅ daarna pas locatie ophalen
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(pos => {
-      const lat = pos.coords.latitude;
-      const lon = pos.coords.longitude;
+if (navigator.geolocation) {
 
-      map.setView([lat, lon], 11);
-    });
-  }
+navigator.geolocation.getCurrentPosition(pos => {
 
+  userLat = pos.coords.latitude;
+  userLon = pos.coords.longitude;
+
+  map.setView([userLat, userLon], 11);
+
+  L.circleMarker([userLat, userLon], {
+    radius: 8,
+    color: "#2563eb",
+    fillColor: "#3b82f6",
+    fillOpacity: 1
+  })
+  .addTo(map)
+  .bindPopup("📍 Jij bent hier")
+  .openPopup();
+
+  // ✅ HIER PLAATSEN
+  laadVerkopers();
+
+},
+err => {
+  console.log("LOCATIE FOUT:", err.message);
+
+  // fallback als locatie niet lukt
   laadVerkopers();
 });
-
 
 // =============================
 // VERKOPERS LADEN
@@ -298,8 +317,16 @@ function laadVerkopers() {
       verkopers.length = 0;
 
       snapshot.forEach(doc => {
-        const v = doc.data();
-        verkopers.push(v);
+const v = doc.data();
+
+// afstand berekenen als locatie bekend is
+if(userLat && userLon){
+  const dx = userLat - parseFloat(v.lat);
+  const dy = userLon - parseFloat(v.lon);
+  v.afstand = Math.sqrt(dx*dx + dy*dy);
+}
+
+verkopers.push(v);
 
         const lat = parseFloat(v.lat) + (Math.random()-0.5)*0.02;
         const lon = parseFloat(v.lon) + (Math.random()-0.5)*0.02;
@@ -328,6 +355,18 @@ function toonVerkopers() {
 
   const lijst = document.getElementById("verkopersLijst");
   lijst.innerHTML = "";
+// sorteer op afstand als locatie bekend is
+if(userLat && userLon){
+
+  verkopers.forEach(v => {
+    const dx = userLat - parseFloat(v.lat);
+    const dy = userLon - parseFloat(v.lon);
+    v.afstand = Math.sqrt(dx*dx + dy*dy);
+  });
+}
+
+  verkopers.sort((a,b)=> a.afstand - b.afstand);
+
 
   verkopers.forEach(v => {
 
@@ -335,11 +374,14 @@ function toonVerkopers() {
     div.className = "verkoper";
     div.style.cursor = "pointer";
 
-    div.innerHTML = `
-      <h3>${v.naam}</h3>
-      <p>${v.producten}</p>
-      ${v.telefoon ? `<p><strong>Telefoon:</strong> ${v.telefoon}</p>` : ""}
-    `;
+div.innerHTML = `
+  <h3>${v.naam}</h3>
+  <p>${v.producten}</p>
+  ${v.afstand ? `<p style="color:#2f855a;font-weight:600;">📍 ${Math.round(v.afstand*111)} km bij jou vandaan</p>` : ""}
+  ${v.telefoon ? `<p><strong>Telefoon:</strong> ${v.telefoon}</p>` : ""}
+`;
+
+
 
 div.onclick = () => {
   openDetail(v);
