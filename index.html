@@ -273,37 +273,42 @@ window.addEventListener("load", () => {
     attribution: "© OpenStreetMap"
   }).addTo(map);
 
-  // ✅ daarna pas locatie ophalen
-if (navigator.geolocation) {
+  // locatie ophalen
+  if (navigator.geolocation) {
 
-navigator.geolocation.getCurrentPosition(pos => {
+    navigator.geolocation.getCurrentPosition(
 
-  userLat = pos.coords.latitude;
-  userLon = pos.coords.longitude;
+      pos => {
 
-  map.setView([userLat, userLon], 11);
+        userLat = pos.coords.latitude;
+        userLon = pos.coords.longitude;
 
-  L.circleMarker([userLat, userLon], {
-    radius: 8,
-    color: "#2563eb",
-    fillColor: "#3b82f6",
-    fillOpacity: 1
-  })
-  .addTo(map)
-  .bindPopup("📍 Jij bent hier")
-  .openPopup();
+        map.setView([userLat, userLon], 11);
 
-  // ✅ HIER PLAATSEN
-  laadVerkopers();
+        L.circleMarker([userLat, userLon], {
+          radius: 8,
+          color: "#2563eb",
+          fillColor: "#3b82f6",
+          fillOpacity: 1
+        })
+        .addTo(map)
+        .bindPopup("📍 Jij bent hier");
 
-},
-err => {
-  console.log("LOCATIE FOUT:", err.message);
+        laadVerkopers();
+      },
 
-  // fallback als locatie niet lukt
-  laadVerkopers();
+      err => {
+        console.log("LOCATIE FOUT:", err.message);
+        laadVerkopers();
+      }
+
+    );
+
+  } else {
+    laadVerkopers();
+  }
+
 });
-
 // =============================
 // VERKOPERS LADEN
 // =============================
@@ -365,7 +370,7 @@ if(userLat && userLon){
   });
 }
 
-  verkopers.sort((a,b)=> a.afstand - b.afstand);
+  verkopers.sort((a,b)=> (a.afstand ?? 999999) - (b.afstand ?? 999999));
 
 
   verkopers.forEach(v => {
