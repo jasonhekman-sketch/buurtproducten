@@ -263,21 +263,23 @@ let actieveMarker = null;
 
 
 window.addEventListener("load", () => {
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(pos => {
-    const lat = pos.coords.latitude;
-    const lon = pos.coords.longitude;
 
-    map.setView([lat, lon], 11);
-  });
-}
-
-  // ✅ kaart starten
+  // kaart starten
   map = L.map("map").setView([52.1, 5.1], 7);
 
   L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
     attribution: "© OpenStreetMap"
   }).addTo(map);
+
+  // ✅ daarna pas locatie ophalen
+  if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition(pos => {
+      const lat = pos.coords.latitude;
+      const lon = pos.coords.longitude;
+
+      map.setView([lat, lon], 11);
+    });
+  }
 
   laadVerkopers();
 });
